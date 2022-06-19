@@ -1,0 +1,45 @@
+function classify(w0, w1, wa, wb, ukX, ukC, Xm, Cm,)
+
+samplingRate = 192000;
+numOfChannels = 1;
+recordDuration = 5;
+open = 0;
+closed = 0;
+total = 0;
+while(true)
+    
+    data=wavrecord(samplingRate * recordDuration ,samplingRate, numOfChannels);
+
+    impactSound = extractImpactSound(data, samplingRate);
+
+    if (length(impactSound) > 0)
+        
+        % Calculate FFT
+        freq = abs(fft(impactSound .* hann(length(impactSound))', 256));
+        freqs = samplingRate*(0:128)/256;
+        magnitudes = freq(1:129);
+
+        % Compute mel-cepstrum
+        impactCepstrum = melcepstrum(magnitudes, freqs);
+        
+        impactSound = normalize(impactSound);
+        
+        % Find projections
+        wx = ukX' * (impactSound' - Xm);
+        wc = ukC' * (impactCepstrum' - Cm);        
+        
+        distanceOpen = norm(wx- w0) + norm(wc - wa);
+        distanceClosed = norm(wxClosed- w1) + norm(wcClosed - wb);              
+        
+        if(distanceOpen < distanceClosed)
+            fprintf(1,'Açýk\n');
+            open = open + 1;
+        else
+            fprintf(1,'Kapalý\n');
+            closed = closed + 1;
+        end
+        
+        total = total + 1;
+        fprintf('Açik : %d, Kapali %d , Toplam : %d, \n', open, closed, total);
+    end
+end
